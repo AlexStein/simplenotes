@@ -3,6 +3,7 @@ package ru.softmine.simplenotes.ui.common
 import android.content.Context
 import android.util.AttributeSet
 import android.view.View
+import androidx.annotation.NonNull
 import androidx.coordinatorlayout.widget.CoordinatorLayout
 import androidx.core.view.ViewCompat
 import com.google.android.material.floatingactionbutton.FloatingActionButton
@@ -35,7 +36,8 @@ class FABBehavior(context: Context, attributeSet: AttributeSet) :
         dyConsumed: Int,
         dxUnconsumed: Int,
         dyUnconsumed: Int,
-        type: Int
+        type: Int,
+        consumed: IntArray
     ) {
         super.onNestedScroll(
             coordinatorLayout,
@@ -45,7 +47,8 @@ class FABBehavior(context: Context, attributeSet: AttributeSet) :
             dyConsumed,
             dxUnconsumed,
             dyUnconsumed,
-            type
+            type,
+            consumed
         )
 
         if (dyConsumed > 0 && child.visibility == View.VISIBLE) {

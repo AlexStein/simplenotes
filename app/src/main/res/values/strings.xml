@@ -10,4 +10,5 @@
     <string name="note_title_hint">Enter note title</string>
     <string name="new_note_title">New Note</string>
     <string name="add_new_note">Add new note</string>
+    <string name="ok_button">OK</string>
 </resources>
