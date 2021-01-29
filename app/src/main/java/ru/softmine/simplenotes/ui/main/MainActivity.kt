@@ -14,13 +14,14 @@ class MainActivity : BaseActivity<List<Note>?, MainViewState>() {
         ViewModelProvider(this).get(MainViewModel::class.java)
     }
     override val layoutRes = R.layout.activity_main
+    override val ui: ActivityMainBinding by lazy {
+        ActivityMainBinding.inflate(layoutInflater)
+    }
 
-    private lateinit var ui: ActivityMainBinding
     private lateinit var adapter: MainAdapter
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        ui = ActivityMainBinding.inflate(layoutInflater)
         setContentView(ui.root)
 
         adapter = MainAdapter(object : OnItemClickListener {

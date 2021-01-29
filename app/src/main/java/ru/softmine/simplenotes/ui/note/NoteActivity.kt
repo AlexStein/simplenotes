@@ -33,8 +33,9 @@ class NoteActivity : BaseActivity<Note?, NoteViewState>() {
         ViewModelProvider(this).get(NoteViewModel::class.java)
     }
     override val layoutRes = R.layout.activity_note
-
-    private lateinit var ui: ActivityNoteBinding
+    override val ui: ActivityNoteBinding by lazy {
+        ActivityNoteBinding.inflate(layoutInflater)
+    }
     private var note: Note? = null
 
 
@@ -55,7 +56,6 @@ class NoteActivity : BaseActivity<Note?, NoteViewState>() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         val noteId = intent.getStringExtra(EXTRA_NOTE)
-        ui = ActivityNoteBinding.inflate(layoutInflater)
         setContentView(ui.root)
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
 
