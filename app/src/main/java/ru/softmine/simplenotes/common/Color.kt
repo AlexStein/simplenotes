@@ -15,7 +15,7 @@ enum class Color {
 }
 
 fun getColorResource(color: Color?): Int {
-    return when(color) {
+    return when (color) {
         Color.WHITE -> R.color.color_white
         Color.RED -> R.color.color_red
         Color.ORANGE -> R.color.color_orange

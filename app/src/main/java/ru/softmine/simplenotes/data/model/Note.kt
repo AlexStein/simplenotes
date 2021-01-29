@@ -11,7 +11,8 @@ data class Note(
     val title: String = "",
     val body: String = "",
     val color: Color = Color.WHITE,
-    val lastChanged: Date = Date()) : Parcelable {
+    val lastChanged: Date = Date()
+) : Parcelable {
 
     override fun equals(other: Any?): Boolean {
         if (this === other) {
