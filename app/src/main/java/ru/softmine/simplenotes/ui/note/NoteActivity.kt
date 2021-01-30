@@ -90,19 +90,19 @@ class NoteActivity : BaseActivity<Note?, NoteViewState>() {
     }
 
     private fun triggerSaveNote() {
-        if (ui.noteTitleEdit.text == null || ui.noteBodyEdit.text!!.length < 3) {
-            return
+        ui.noteTitleEdit.text?.let {
+            if (it.length < 3) return
+
+            Handler().postDelayed({
+                note = note?.copy(
+                    title = ui.noteTitleEdit.text.toString(),
+                    body = ui.noteBodyEdit.text.toString(),
+                    lastChanged = Date()
+                ) ?: createNewNote()
+
+                note?.let { viewModel.saveChanges(it) }
+            }, SAVE_DELAY)
         }
-
-        Handler().postDelayed({
-            note = note?.copy(
-                title = ui.noteTitleEdit.text.toString(),
-                body = ui.noteBodyEdit.text.toString(),
-                lastChanged = Date()
-            ) ?: createNewNote()
-
-            note?.let { viewModel.saveChanges(it) }
-        }, SAVE_DELAY)
     }
 
     private fun createNewNote(): Note = Note(

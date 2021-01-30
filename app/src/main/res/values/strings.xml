@@ -1,14 +1,13 @@
 <resources>
     <string name="app_name">SimpleNotes</string>
     <string name="title_activity_note">NoteActivity</string>
-    <!--
-    This string is used for square devices and overridden by hello_world in
-    values-round/strings.xml for round devices.
-    -->
-    <string name="hello_world">Hello Square World!</string>
     <string name="note_body_hint">Enter note text</string>
     <string name="note_title_hint">Enter note title</string>
     <string name="new_note_title">New Note</string>
     <string name="add_new_note">Add new note</string>
     <string name="ok_button">OK</string>
+    <string name="logout">Logout</string>
+    <string name="logout_message">Logout from application</string>
+    <string name="cancel_button">Cancel</string>
+    <string name="logout_title">Logout</string>
 </resources>
