@@ -2,7 +2,6 @@ package ru.softmine.simplenotes.ui.base
 
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
-import androidx.lifecycle.Observer
 import androidx.viewbinding.ViewBinding
 import com.google.android.material.snackbar.Snackbar
 import ru.softmine.simplenotes.R
@@ -17,12 +16,10 @@ abstract class BaseActivity<T, S : BaseViewState<T>> : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(layoutRes)
 
-        viewModel.getViewState().observe(this, object : Observer<S> {
-            override fun onChanged(t: S?) {
-                t?.let {
-                    it.data?.let { renderData(it) }
-                    it.error?.let { renderError(it) }
-                }
+        viewModel.getViewState().observe(this, { t ->
+            t?.apply {
+                data?.let { renderData(it) }
+                error?.let { renderError(it) }
             }
         })
     }
@@ -38,6 +35,5 @@ abstract class BaseActivity<T, S : BaseViewState<T>> : AppCompatActivity() {
             this.setAction(R.string.ok_button) { this.dismiss() }
             this.show()
         }
-
     }
 }

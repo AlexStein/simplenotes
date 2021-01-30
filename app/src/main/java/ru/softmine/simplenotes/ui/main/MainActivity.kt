@@ -40,8 +40,6 @@ class MainActivity : BaseActivity<List<Note>?, MainViewState>() {
     }
 
     override fun renderData(data: List<Note>?) {
-        if (data != null) {
-            adapter.notes = data
-        }
+        data?.let { adapter.notes = it }
     }
 }

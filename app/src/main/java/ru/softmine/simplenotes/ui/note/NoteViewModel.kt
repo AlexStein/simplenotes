@@ -1,6 +1,5 @@
 package ru.softmine.simplenotes.ui.note
 
-import androidx.lifecycle.Observer
 import ru.softmine.simplenotes.data.Repository
 import ru.softmine.simplenotes.data.model.Note
 import ru.softmine.simplenotes.data.model.NoteResult
@@ -16,25 +15,21 @@ class NoteViewModel(private val repository: Repository = Repository) :
     }
 
     fun loadNote(noteId: String) {
-        repository.getNoteById(noteId).observeForever(object : Observer<NoteResult> {
-            override fun onChanged(t: NoteResult?) {
-                if (t == null) return
-
-                when (t) {
+        repository.getNoteById(noteId).observeForever { t ->
+            t?.let {
+                when (it) {
                     is NoteResult.Success<*> -> {
-                        viewStateLiveData.value = NoteViewState(note = t.data as? Note)
+                        viewStateLiveData.value = NoteViewState(note = it.data as? Note)
                     }
                     is NoteResult.Error -> {
-                        viewStateLiveData.value = NoteViewState(error = t.error)
+                        viewStateLiveData.value = NoteViewState(error = it.error)
                     }
                 }
             }
-        })
+        }
     }
 
     override fun onCleared() {
-        if (pendingNote != null) {
-            repository.saveNote(pendingNote!!)
-        }
+        pendingNote?.let { repository.saveNote(it) }
     }
 }

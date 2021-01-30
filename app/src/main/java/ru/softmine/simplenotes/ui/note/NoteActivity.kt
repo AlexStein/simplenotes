@@ -9,6 +9,8 @@ import android.text.TextWatcher
 import android.view.MenuItem
 import androidx.lifecycle.ViewModelProvider
 import ru.softmine.simplenotes.R
+import ru.softmine.simplenotes.common.format
+import ru.softmine.simplenotes.common.getColorInt
 import ru.softmine.simplenotes.common.getColorResource
 import ru.softmine.simplenotes.data.model.Note
 import ru.softmine.simplenotes.databinding.ActivityNoteBinding
@@ -59,25 +61,22 @@ class NoteActivity : BaseActivity<Note?, NoteViewState>() {
         setContentView(ui.root)
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
 
-        noteId?.let {
-            viewModel.loadNote(it)
-        }
+        noteId?.let { viewModel.loadNote(it) }
+        supportActionBar?.title = getString(R.string.new_note_title)
 
-        if (noteId == null) {
-            supportActionBar?.title = getString(R.string.new_note_title)
-        }
+        initView()
 
         ui.noteTitleEdit.addTextChangedListener(textChangeListener)
         ui.noteBodyEdit.addTextChangedListener(textChangeListener)
-
-        initView()
     }
 
     private fun initView() {
-        ui.noteTitleEdit.setText(this.note?.title ?: "")
-        ui.noteBodyEdit.setText(this.note?.body ?: "")
-
-        ui.root.setBackgroundColor(resources.getColor(getColorResource(this.note?.color), null))
+        note?.run {
+            ui.noteTitleEdit.setText(title)
+            ui.noteBodyEdit.setText(body)
+            supportActionBar?.title = lastChanged.format()
+            ui.root.setBackgroundColor(color.getColorInt(this@NoteActivity))
+        }
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
@@ -102,9 +101,7 @@ class NoteActivity : BaseActivity<Note?, NoteViewState>() {
                 lastChanged = Date()
             ) ?: createNewNote()
 
-            if (note != null) {
-                viewModel.saveChanges(note!!)
-            }
+            note?.let { viewModel.saveChanges(it) }
         }, SAVE_DELAY)
     }
 
