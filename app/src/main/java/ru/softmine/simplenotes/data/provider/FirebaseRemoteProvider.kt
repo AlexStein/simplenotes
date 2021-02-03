@@ -13,15 +13,17 @@ import ru.softmine.simplenotes.data.model.User
 private const val NOTES_COLLECTION = "notes"
 private const val USERS_COLLECTION = "users"
 
-class FirebaseRemoteProvider() : RemoteDataProvider {
+class FirebaseRemoteProvider(
+    private val firebaseAuth: FirebaseAuth,
+    private val db: FirebaseFirestore
+) : RemoteDataProvider {
 
     companion object {
         private val TAG = FirebaseRemoteProvider::class.java.simpleName
     }
 
-    private val db = FirebaseFirestore.getInstance()
     private val currentUser
-        get() = FirebaseAuth.getInstance().currentUser
+        get() = firebaseAuth.currentUser
 
     override fun subscribeToAllNotes(): LiveData<NoteResult> =
         MutableLiveData<NoteResult>().apply {
@@ -42,12 +44,12 @@ class FirebaseRemoteProvider() : RemoteDataProvider {
         MutableLiveData<NoteResult>().apply {
             try {
                 getUserNotesCollection().document(id).get()
-                .addOnSuccessListener { doc ->
-                    value = NoteResult.Success(doc.toObject(Note::class.java))
-                }
-                .addOnFailureListener { exception ->
-                    throw exception
-                }
+                    .addOnSuccessListener { doc ->
+                        value = NoteResult.Success(doc.toObject(Note::class.java))
+                    }
+                    .addOnFailureListener { exception ->
+                        throw exception
+                    }
             } catch (e: Throwable) {
                 value = NoteResult.Error(e)
             }
@@ -57,15 +59,15 @@ class FirebaseRemoteProvider() : RemoteDataProvider {
         MutableLiveData<NoteResult>().apply {
             try {
                 getUserNotesCollection().document(note.id)
-                .set(note)
-                .addOnSuccessListener {
-                    Log.d(TAG, "Note $note is saved")
-                    value = NoteResult.Success(note)
-                }
-                .addOnFailureListener { exception ->
-                    Log.e(TAG, "Error saving note $note. Message: ${exception.message}")
-                    throw exception
-                }
+                    .set(note)
+                    .addOnSuccessListener {
+                        Log.d(TAG, "Note $note is saved")
+                        value = NoteResult.Success(note)
+                    }
+                    .addOnFailureListener { exception ->
+                        Log.e(TAG, "Error saving note $note. Message: ${exception.message}")
+                        throw exception
+                    }
             } catch (e: Throwable) {
                 value = NoteResult.Error(e)
             }
@@ -73,7 +75,7 @@ class FirebaseRemoteProvider() : RemoteDataProvider {
 
     override fun getCurrentUser(): LiveData<User?> =
         MutableLiveData<User?>().apply {
-            value = currentUser?.let { User(it.displayName ?: "", it.email ?: "")}
+            value = currentUser?.let { User(it.displayName ?: "", it.email ?: "") }
         }
 
     private fun getUserNotesCollection() = currentUser?.let {

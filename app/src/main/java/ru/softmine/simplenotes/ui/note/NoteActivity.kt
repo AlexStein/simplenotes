@@ -7,11 +7,10 @@ import android.os.Handler
 import android.text.Editable
 import android.text.TextWatcher
 import android.view.MenuItem
-import androidx.lifecycle.ViewModelProvider
+import org.koin.android.viewmodel.ext.android.viewModel
 import ru.softmine.simplenotes.R
 import ru.softmine.simplenotes.common.format
 import ru.softmine.simplenotes.common.getColorInt
-import ru.softmine.simplenotes.common.getColorResource
 import ru.softmine.simplenotes.data.model.Note
 import ru.softmine.simplenotes.databinding.ActivityNoteBinding
 import ru.softmine.simplenotes.ui.base.BaseActivity
@@ -31,9 +30,7 @@ class NoteActivity : BaseActivity<Note?, NoteViewState>() {
         }
     }
 
-    override val viewModel: NoteViewModel by lazy {
-        ViewModelProvider(this).get(NoteViewModel::class.java)
-    }
+    override val model: NoteViewModel by viewModel()
     override val layoutRes = R.layout.activity_note
     override val ui: ActivityNoteBinding by lazy {
         ActivityNoteBinding.inflate(layoutInflater)
@@ -61,7 +58,7 @@ class NoteActivity : BaseActivity<Note?, NoteViewState>() {
         setContentView(ui.root)
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
 
-        noteId?.let { viewModel.loadNote(it) }
+        noteId?.let { model.loadNote(it) }
         supportActionBar?.title = getString(R.string.new_note_title)
 
         initView()
@@ -100,7 +97,7 @@ class NoteActivity : BaseActivity<Note?, NoteViewState>() {
                     lastChanged = Date()
                 ) ?: createNewNote()
 
-                note?.let { viewModel.saveChanges(it) }
+                note?.let { model.saveChanges(it) }
             }, SAVE_DELAY)
         }
     }

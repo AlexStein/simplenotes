@@ -5,7 +5,7 @@ import ru.softmine.simplenotes.data.model.Note
 import ru.softmine.simplenotes.data.model.NoteResult
 import ru.softmine.simplenotes.ui.base.BaseViewModel
 
-class NoteViewModel(private val repository: Repository = Repository) :
+class NoteViewModel(private val repository: Repository) :
     BaseViewModel<Note?, NoteViewState>() {
 
     private var pendingNote: Note? = null

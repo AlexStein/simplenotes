@@ -7,7 +7,7 @@ import ru.softmine.simplenotes.data.model.Note
 import ru.softmine.simplenotes.data.model.NoteResult
 import ru.softmine.simplenotes.ui.base.BaseViewModel
 
-class MainViewModel(private val repository: Repository = Repository) :
+class MainViewModel(private val repository: Repository) :
     BaseViewModel<List<Note>?, MainViewState>() {
 
     private val notesObserver =

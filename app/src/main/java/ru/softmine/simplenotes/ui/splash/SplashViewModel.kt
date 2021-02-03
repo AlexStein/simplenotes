@@ -4,7 +4,7 @@ import ru.softmine.simplenotes.data.Repository
 import ru.softmine.simplenotes.data.errors.NoAuthException
 import ru.softmine.simplenotes.ui.base.BaseViewModel
 
-class SplashViewModel(private val repository: Repository = Repository) :
+class SplashViewModel(private val repository: Repository) :
     BaseViewModel<Boolean?, SplashViewState>() {
 
     fun requestUser() {

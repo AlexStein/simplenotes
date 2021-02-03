@@ -14,7 +14,7 @@ private const val RC_SIGN_IN = 458
 
 abstract class BaseActivity<T, S : BaseViewState<T>> : AppCompatActivity() {
 
-    abstract val viewModel: BaseViewModel<T, S>
+    abstract val model: BaseViewModel<T, S>
     abstract val layoutRes: Int
     abstract val ui: ViewBinding
 
@@ -22,7 +22,7 @@ abstract class BaseActivity<T, S : BaseViewState<T>> : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(layoutRes)
 
-        viewModel.getViewState().observe(this, { t ->
+        model.getViewState().observe(this, { t ->
             t?.apply {
                 data?.let { renderData(it) }
                 error?.let { renderError(it) }
