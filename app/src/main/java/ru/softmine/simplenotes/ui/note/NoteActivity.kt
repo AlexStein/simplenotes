@@ -68,6 +68,12 @@ class NoteActivity : BaseActivity<NoteViewState.Data, NoteViewState>() {
             supportActionBar?.title = getString(R.string.new_note_title)
         }
 
+        ui.colorPicker.onColorClickListener = { c ->
+            color = c
+            setBackgroundColor(c)
+            triggerSaveNote()
+        }
+
         setEditListeners()
     }
 
@@ -82,7 +88,7 @@ class NoteActivity : BaseActivity<NoteViewState.Data, NoteViewState>() {
             }
             setEditListeners()
             supportActionBar?.title = lastChanged.format()
-            ui.root.setBackgroundColor(color.getColorInt(this@NoteActivity))
+            setBackgroundColor(color)
         }
     }
 
@@ -101,6 +107,7 @@ class NoteActivity : BaseActivity<NoteViewState.Data, NoteViewState>() {
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean = when (item.itemId) {
         android.R.id.home -> super.onBackPressed().let { true }
+        R.id.palette -> togglePalette().let { true }
         R.id.delete -> deleteNote().let { true }
         else -> super.onOptionsItemSelected(item)
     }
@@ -123,7 +130,8 @@ class NoteActivity : BaseActivity<NoteViewState.Data, NoteViewState>() {
                 note = note?.copy(
                     title = ui.noteTitleEdit.text.toString(),
                     body = ui.noteBodyEdit.text.toString(),
-                    lastChanged = Date()
+                    lastChanged = Date(),
+                    color = color
                 ) ?: createNewNote()
 
                 note?.let { n -> model.saveChanges(n) }
@@ -143,5 +151,25 @@ class NoteActivity : BaseActivity<NoteViewState.Data, NoteViewState>() {
         this.note = data.note
         data.note?.let { color = it.color }
         initView()
+    }
+
+    private fun setBackgroundColor(color: Color) {
+        ui.root.setBackgroundColor(color.getColorInt(this@NoteActivity))
+    }
+
+    private fun togglePalette() {
+        if (ui.colorPicker.isOpen) {
+            ui.colorPicker.close()
+        } else {
+            ui.colorPicker.open()
+        }
+    }
+
+    override fun onBackPressed() {
+        if (ui.colorPicker.isOpen) {
+            ui.colorPicker.close()
+            return
+        }
+        super.onBackPressed()
     }
 }

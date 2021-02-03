@@ -12,12 +12,25 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:orientation="vertical"
-        android:padding="@dimen/layout_padding"
         app:layout_behavior="@string/appbar_scrolling_view_behavior">
+
+        <HorizontalScrollView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:scrollbars="none">
+
+            <ru.softmine.simplenotes.ui.customviews.ColorPickerView
+                android:id="@+id/colorPicker"
+                android:layout_width="wrap_content"
+                android:layout_height="?attr/actionBarSize"/>
+        </HorizontalScrollView>
 
         <com.google.android.material.textfield.TextInputLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:layout_marginStart="@dimen/layout_padding"
+            android:layout_marginEnd="@dimen/layout_padding"
+            android:layout_marginTop="@dimen/layout_padding"
             android:hint="@string/note_title_hint">
 
             <com.google.android.material.textfield.TextInputEditText
@@ -31,7 +44,9 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:background="@null"
-            android:layout_marginTop="@dimen/note_margin"
+            android:layout_marginStart="@dimen/layout_padding"
+            android:layout_marginEnd="@dimen/layout_padding"
+            android:layout_marginTop="@dimen/layout_padding"
             android:hint="@string/note_body_hint" />
     </LinearLayout>
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

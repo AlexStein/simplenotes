@@ -9,6 +9,7 @@ import ru.softmine.simplenotes.ui.base.BaseViewModel
 
 class MainViewModel(private val repository: Repository) :
     BaseViewModel<List<Note>?, MainViewState>() {
+    private val repositoryNotes = repository.getNotes()
 
     private val notesObserver =
         Observer<NoteResult> { t ->
@@ -24,14 +25,12 @@ class MainViewModel(private val repository: Repository) :
             }
         }
 
-    private val repositoryNotes = repository.getNotes()
-
-    fun viewState(): LiveData<MainViewState> = viewStateLiveData
-
     init {
         viewStateLiveData.value = MainViewState()
         repositoryNotes.observeForever(notesObserver)
     }
+
+    fun viewState(): LiveData<MainViewState> = viewStateLiveData
 
     override fun onCleared() {
         repositoryNotes.removeObserver(notesObserver)
