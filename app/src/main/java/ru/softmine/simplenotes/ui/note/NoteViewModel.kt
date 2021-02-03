@@ -6,12 +6,13 @@ import ru.softmine.simplenotes.data.model.NoteResult
 import ru.softmine.simplenotes.ui.base.BaseViewModel
 
 class NoteViewModel(private val repository: Repository) :
-    BaseViewModel<Note?, NoteViewState>() {
+    BaseViewModel<NoteViewState.Data, NoteViewState>() {
 
-    private var pendingNote: Note? = null
+    private val currentNote: Note?
+        get() = viewStateLiveData.value?.data?.note
 
     fun saveChanges(note: Note) {
-        pendingNote = note
+        viewStateLiveData.value = NoteViewState(NoteViewState.Data(note = note))
     }
 
     fun loadNote(noteId: String) {
@@ -19,7 +20,8 @@ class NoteViewModel(private val repository: Repository) :
             t?.let {
                 when (it) {
                     is NoteResult.Success<*> -> {
-                        viewStateLiveData.value = NoteViewState(note = it.data as? Note)
+                        viewStateLiveData.value =
+                            NoteViewState(NoteViewState.Data(note = it.data as? Note))
                     }
                     is NoteResult.Error -> {
                         viewStateLiveData.value = NoteViewState(error = it.error)
@@ -29,7 +31,20 @@ class NoteViewModel(private val repository: Repository) :
         }
     }
 
+    fun deleteNote() {
+        currentNote?.let { note ->
+            repository.deleteNote(note.id).observeForever { t ->
+                t?.let {
+                    viewStateLiveData.value = when (it) {
+                        is NoteResult.Success<*> -> NoteViewState(NoteViewState.Data(isDeleted = true))
+                        is NoteResult.Error -> NoteViewState(error = it.error)
+                    }
+                }
+            }
+        }
+    }
+
     override fun onCleared() {
-        pendingNote?.let { repository.saveNote(it) }
+        currentNote?.let { repository.saveNote(it) }
     }
 }

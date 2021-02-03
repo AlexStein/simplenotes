@@ -1,14 +1,18 @@
 package ru.softmine.simplenotes.ui.note
 
+import android.app.AlertDialog
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import android.os.Handler
 import android.text.Editable
 import android.text.TextWatcher
+import android.view.Menu
+import android.view.MenuInflater
 import android.view.MenuItem
 import org.koin.android.viewmodel.ext.android.viewModel
 import ru.softmine.simplenotes.R
+import ru.softmine.simplenotes.common.Color
 import ru.softmine.simplenotes.common.format
 import ru.softmine.simplenotes.common.getColorInt
 import ru.softmine.simplenotes.data.model.Note
@@ -18,7 +22,7 @@ import java.util.*
 
 private const val SAVE_DELAY = 2000L
 
-class NoteActivity : BaseActivity<Note?, NoteViewState>() {
+class NoteActivity : BaseActivity<NoteViewState.Data, NoteViewState>() {
 
     companion object {
         private val EXTRA_NOTE = NoteActivity::class.java.name + "extra.NOTE"
@@ -36,7 +40,7 @@ class NoteActivity : BaseActivity<Note?, NoteViewState>() {
         ActivityNoteBinding.inflate(layoutInflater)
     }
     private var note: Note? = null
-
+    private var color: Color = Color.BLUE
 
     private val textChangeListener = object : TextWatcher {
         override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {
@@ -58,32 +62,57 @@ class NoteActivity : BaseActivity<Note?, NoteViewState>() {
         setContentView(ui.root)
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
 
-        noteId?.let { model.loadNote(it) }
-        supportActionBar?.title = getString(R.string.new_note_title)
+        noteId?.let {
+            model.loadNote(it)
+        } ?: run {
+            supportActionBar?.title = getString(R.string.new_note_title)
+        }
 
-        initView()
-
-        ui.noteTitleEdit.addTextChangedListener(textChangeListener)
-        ui.noteBodyEdit.addTextChangedListener(textChangeListener)
+        setEditListeners()
     }
 
     private fun initView() {
         note?.run {
-            ui.noteTitleEdit.setText(title)
-            ui.noteBodyEdit.setText(body)
+            removeEditListeners()
+            if (ui.noteTitleEdit.text.toString() != title) {
+                ui.noteTitleEdit.setText(title)
+            }
+            if (ui.noteBodyEdit.text.toString() != body) {
+                ui.noteBodyEdit.setText(body)
+            }
+            setEditListeners()
             supportActionBar?.title = lastChanged.format()
             ui.root.setBackgroundColor(color.getColorInt(this@NoteActivity))
         }
     }
 
-    override fun onOptionsItemSelected(item: MenuItem): Boolean {
-        return when (item.itemId) {
-            android.R.id.home -> {
-                onBackPressed()
-                true
-            }
-            else -> super.onOptionsItemSelected(item)
-        }
+    private fun setEditListeners() {
+        ui.noteTitleEdit.addTextChangedListener(textChangeListener)
+        ui.noteBodyEdit.addTextChangedListener(textChangeListener)
+    }
+
+    private fun removeEditListeners() {
+        ui.noteTitleEdit.removeTextChangedListener(textChangeListener)
+        ui.noteBodyEdit.removeTextChangedListener(textChangeListener)
+    }
+
+    override fun onCreateOptionsMenu(menu: Menu?): Boolean =
+        MenuInflater(this).inflate(R.menu.menu_note, menu).let { true }
+
+    override fun onOptionsItemSelected(item: MenuItem): Boolean = when (item.itemId) {
+        android.R.id.home -> super.onBackPressed().let { true }
+        R.id.delete -> deleteNote().let { true }
+        else -> super.onOptionsItemSelected(item)
+    }
+
+    private fun deleteNote() {
+        AlertDialog.Builder(this)
+            .setTitle(R.string.delete_title)
+            .setMessage(R.string.delete_message)
+            .setPositiveButton(R.string.ok_button) { _, _ -> model.deleteNote() }
+            .setNegativeButton(R.string.cancel_button) { dialog, _ -> dialog.dismiss() }
+            .create()
+            .show()
     }
 
     private fun triggerSaveNote() {
@@ -97,7 +126,7 @@ class NoteActivity : BaseActivity<Note?, NoteViewState>() {
                     lastChanged = Date()
                 ) ?: createNewNote()
 
-                note?.let { model.saveChanges(it) }
+                note?.let { n -> model.saveChanges(n) }
             }, SAVE_DELAY)
         }
     }
@@ -108,8 +137,11 @@ class NoteActivity : BaseActivity<Note?, NoteViewState>() {
         ui.noteBodyEdit.text.toString()
     )
 
-    override fun renderData(data: Note?) {
-        this.note = data
+    override fun renderData(data: NoteViewState.Data) {
+        if (data.isDeleted) finish()
+
+        this.note = data.note
+        data.note?.let { color = it.color }
         initView()
     }
 }
