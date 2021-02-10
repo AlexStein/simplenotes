@@ -1,5 +1,6 @@
 package ru.softmine.simplenotes.ui.main
 
+import androidx.annotation.VisibleForTesting
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.Observer
 import ru.softmine.simplenotes.data.Repository
@@ -7,7 +8,7 @@ import ru.softmine.simplenotes.data.model.Note
 import ru.softmine.simplenotes.data.model.NoteResult
 import ru.softmine.simplenotes.ui.base.BaseViewModel
 
-class MainViewModel(private val repository: Repository) :
+class MainViewModel(repository: Repository) :
     BaseViewModel<List<Note>?, MainViewState>() {
     private val repositoryNotes = repository.getNotes()
 
@@ -32,7 +33,8 @@ class MainViewModel(private val repository: Repository) :
 
     fun viewState(): LiveData<MainViewState> = viewStateLiveData
 
-    override fun onCleared() {
+    @VisibleForTesting
+    public override fun onCleared() {
         repositoryNotes.removeObserver(notesObserver)
     }
 }

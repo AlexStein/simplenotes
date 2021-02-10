@@ -29,7 +29,7 @@ class FirebaseRemoteProvider(
         MutableLiveData<NoteResult>().apply {
             try {
                 getUserNotesCollection().addSnapshotListener { snapshot, error ->
-                    value = error?.let { throw it }
+                    value = error?.let { NoteResult.Error(error) }
                         ?: snapshot?.let {
                             val notes = it.documents.map { doc -> doc.toObject(Note::class.java) }
                             NoteResult.Success(notes)
@@ -48,7 +48,7 @@ class FirebaseRemoteProvider(
                         value = NoteResult.Success(doc.toObject(Note::class.java))
                     }
                     .addOnFailureListener { exception ->
-                        throw exception
+                        value = NoteResult.Error(exception)
                     }
             } catch (e: Throwable) {
                 value = NoteResult.Error(e)

@@ -154,7 +154,7 @@ class NoteActivity : BaseActivity<NoteViewState.Data, NoteViewState>() {
     }
 
     private fun setBackgroundColor(color: Color) {
-        ui.root.setBackgroundColor(color.getColorInt(this@NoteActivity))
+        ui.layout.setBackgroundColor(color.getColorInt(this@NoteActivity))
     }
 
     private fun togglePalette() {
