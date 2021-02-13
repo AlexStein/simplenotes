@@ -22,7 +22,6 @@ abstract class BaseActivity<T> : AppCompatActivity(), CoroutineScope {
         Dispatchers.Main + Job()
     }
     private lateinit var dataJob: Job
-    private lateinit var errorJob: Job
 
     abstract val model: BaseViewModel<T>
     abstract val layoutRes: Int
@@ -43,7 +42,6 @@ abstract class BaseActivity<T> : AppCompatActivity(), CoroutineScope {
     override fun onStop() {
         super.onStop()
         dataJob.cancel()
-        errorJob.cancel()
     }
 
     override fun onDestroy() {
