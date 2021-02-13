@@ -7,27 +7,48 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.viewbinding.ViewBinding
 import com.firebase.ui.auth.AuthUI
 import com.google.android.material.snackbar.Snackbar
+import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.consumeEach
 import ru.softmine.simplenotes.R
 import ru.softmine.simplenotes.data.errors.NoAuthException
+import kotlin.coroutines.CoroutineContext
 
 private const val RC_SIGN_IN = 458
 
-abstract class BaseActivity<T, S : BaseViewState<T>> : AppCompatActivity() {
+@ExperimentalCoroutinesApi
+abstract class BaseActivity<T> : AppCompatActivity(), CoroutineScope {
 
-    abstract val model: BaseViewModel<T, S>
+    override val coroutineContext: CoroutineContext by lazy {
+        Dispatchers.Main + Job()
+    }
+    private lateinit var dataJob: Job
+    private lateinit var errorJob: Job
+
+    abstract val model: BaseViewModel<T>
     abstract val layoutRes: Int
     abstract val ui: ViewBinding
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(layoutRes)
+    }
 
-        model.getViewState().observe(this, { t ->
-            t?.apply {
-                data?.let { renderData(it) }
-                error?.let { renderError(it) }
-            }
-        })
+    override fun onStart() {
+        super.onStart()
+        dataJob = launch {
+            model.getViewState().consumeEach { renderData(it) }
+        }
+    }
+
+    override fun onStop() {
+        super.onStop()
+        dataJob.cancel()
+        errorJob.cancel()
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        coroutineContext.cancel()
     }
 
     abstract fun renderData(data: T)

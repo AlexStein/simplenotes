@@ -7,6 +7,7 @@ import android.view.Menu
 import android.view.MenuInflater
 import android.view.MenuItem
 import com.firebase.ui.auth.AuthUI
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import org.koin.android.viewmodel.ext.android.viewModel
 import ru.softmine.simplenotes.R
 import ru.softmine.simplenotes.data.model.Note
@@ -15,7 +16,8 @@ import ru.softmine.simplenotes.ui.base.BaseActivity
 import ru.softmine.simplenotes.ui.note.NoteActivity
 import ru.softmine.simplenotes.ui.splash.SplashActivity
 
-class MainActivity : BaseActivity<List<Note>?, MainViewState>(), LogoutDialog.LogoutListener {
+@ExperimentalCoroutinesApi
+class MainActivity : BaseActivity<List<Note>?>(), LogoutDialog.LogoutListener {
 
     companion object {
         fun getStartIntent(context: Context) = Intent(context, MainActivity::class.java)
