@@ -3,7 +3,6 @@ package ru.softmine.simplenotes.ui.common
 import android.content.Context
 import android.util.AttributeSet
 import android.view.View
-import androidx.annotation.NonNull
 import androidx.coordinatorlayout.widget.CoordinatorLayout
 import androidx.core.view.ViewCompat
 import com.google.android.material.floatingactionbutton.FloatingActionButton

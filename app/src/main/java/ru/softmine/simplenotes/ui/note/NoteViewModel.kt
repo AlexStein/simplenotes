@@ -1,35 +1,47 @@
 package ru.softmine.simplenotes.ui.note
 
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.launch
 import ru.softmine.simplenotes.data.Repository
 import ru.softmine.simplenotes.data.model.Note
-import ru.softmine.simplenotes.data.model.NoteResult
 import ru.softmine.simplenotes.ui.base.BaseViewModel
 
-class NoteViewModel(private val repository: Repository = Repository) :
-    BaseViewModel<Note?, NoteViewState>() {
+@ExperimentalCoroutinesApi
+class NoteViewModel(private val repository: Repository) :
+    BaseViewModel<NoteViewState.Data>() {
 
-    private var pendingNote: Note? = null
+    private val currentNote: Note?
+        get() = getViewState().poll()?.note
 
     fun saveChanges(note: Note) {
-        pendingNote = note
+        setData(NoteViewState.Data(note = note))
     }
 
     fun loadNote(noteId: String) {
-        repository.getNoteById(noteId).observeForever { t ->
-            t?.let {
-                when (it) {
-                    is NoteResult.Success<*> -> {
-                        viewStateLiveData.value = NoteViewState(note = it.data as? Note)
-                    }
-                    is NoteResult.Error -> {
-                        viewStateLiveData.value = NoteViewState(error = it.error)
-                    }
-                }
+        launch {
+            try {
+                setData(NoteViewState.Data(note = repository.getNoteById(noteId)))
+            } catch (e: Throwable) {
+                setError(e)
+            }
+        }
+    }
+
+    fun deleteNote() {
+        launch {
+            try {
+                currentNote?.let { repository.deleteNote(it.id) }
+                setData(NoteViewState.Data(isDeleted = true))
+            } catch (e: Throwable) {
+                setError(e)
             }
         }
     }
 
     override fun onCleared() {
-        pendingNote?.let { repository.saveNote(it) }
+        launch {
+            currentNote?.let { repository.saveNote(it) }
+            super.onCleared()
+        }
     }
 }

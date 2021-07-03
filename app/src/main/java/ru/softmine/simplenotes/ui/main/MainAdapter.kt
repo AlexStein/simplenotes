@@ -37,14 +37,14 @@ class MainAdapter(private val onItemClickListener: OnItemClickListener) :
 
     inner class NoteViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
 
-        private val ui = ItemNoteBinding.bind(itemView)
+        private val ui: ItemNoteBinding by lazy { ItemNoteBinding.bind(itemView) }
 
         fun bind(note: Note) {
             with(note) {
                 ui.noteTitle.text = title
                 ui.noteBody.text = body
                 itemView.setBackgroundColor(
-                    itemView.context.resources.getColor(getColorResource(color), null)
+                    itemView.context.resources.getColor(color.getColorResource(), null)
                 )
                 itemView.setOnClickListener { onItemClickListener.onItemClick(note) }
             }

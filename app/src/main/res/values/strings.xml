@@ -10,4 +10,8 @@
     <string name="logout_message">Logout from application</string>
     <string name="cancel_button">Cancel</string>
     <string name="logout_title">Logout</string>
+    <string name="change_color_menu_title">Change color</string>
+    <string name="delete_menu_title">Delete note</string>
+    <string name="delete_title">Delete confirmation</string>
+    <string name="delete_message">Do you really want to delete this note?</string>
 </resources>

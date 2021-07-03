@@ -11,4 +11,8 @@
     <string name="logout_title">Выход</string>
     <string name="logout_message">Вы хотите выйти из аккаунта?</string>
     <string name="cancel_button">Отмена</string>
+    <string name="change_color_menu_title">Выбрать цвет</string>
+    <string name="delete_menu_title">Удалить заметку</string>
+    <string name="delete_title">Подтвердите удаление</string>
+    <string name="delete_message">Вы действительно хотите удалить эту заметку?</string>
 </resources>

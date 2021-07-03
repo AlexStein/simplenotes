@@ -6,8 +6,9 @@ import android.os.Bundle
 import android.view.Menu
 import android.view.MenuInflater
 import android.view.MenuItem
-import androidx.lifecycle.ViewModelProvider
 import com.firebase.ui.auth.AuthUI
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import org.koin.android.viewmodel.ext.android.viewModel
 import ru.softmine.simplenotes.R
 import ru.softmine.simplenotes.data.model.Note
 import ru.softmine.simplenotes.databinding.ActivityMainBinding
@@ -15,15 +16,14 @@ import ru.softmine.simplenotes.ui.base.BaseActivity
 import ru.softmine.simplenotes.ui.note.NoteActivity
 import ru.softmine.simplenotes.ui.splash.SplashActivity
 
-class MainActivity : BaseActivity<List<Note>?, MainViewState>(), LogoutDialog.LogoutListener {
+@ExperimentalCoroutinesApi
+class MainActivity : BaseActivity<List<Note>?>(), LogoutDialog.LogoutListener {
 
     companion object {
         fun getStartIntent(context: Context) = Intent(context, MainActivity::class.java)
     }
 
-    override val viewModel: MainViewModel by lazy {
-        ViewModelProvider(this).get(MainViewModel::class.java)
-    }
+    override val model: MainViewModel by viewModel()
     override val layoutRes = R.layout.activity_main
     override val ui: ActivityMainBinding by lazy {
         ActivityMainBinding.inflate(layoutInflater)
