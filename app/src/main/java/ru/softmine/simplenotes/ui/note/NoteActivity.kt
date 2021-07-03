@@ -1,40 +1,49 @@
 package ru.softmine.simplenotes.ui.note
 
+import android.app.AlertDialog
 import android.content.Context
 import android.content.Intent
-import android.icu.text.SimpleDateFormat
 import android.os.Bundle
-import android.os.Handler
 import android.text.Editable
 import android.text.TextWatcher
+import android.view.Menu
+import android.view.MenuInflater
 import android.view.MenuItem
-import androidx.appcompat.app.AppCompatActivity
-import androidx.lifecycle.ViewModelProviders
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import org.koin.android.viewmodel.ext.android.viewModel
 import ru.softmine.simplenotes.R
-import ru.softmine.simplenotes.common.DATETIME_FORMAT
-import ru.softmine.simplenotes.common.getColorResource
+import ru.softmine.simplenotes.common.Color
+import ru.softmine.simplenotes.common.format
+import ru.softmine.simplenotes.common.getColorInt
 import ru.softmine.simplenotes.data.model.Note
 import ru.softmine.simplenotes.databinding.ActivityNoteBinding
+import ru.softmine.simplenotes.ui.base.BaseActivity
 import java.util.*
 
 private const val SAVE_DELAY = 2000L
 
-class NoteActivity : AppCompatActivity() {
+@ExperimentalCoroutinesApi
+class NoteActivity : BaseActivity<NoteViewState.Data>() {
 
     companion object {
         private val EXTRA_NOTE = NoteActivity::class.java.name + "extra.NOTE"
 
-        fun getNoteStartIntent(context: Context, note: Note?): Intent {
+        fun getNoteStartIntent(context: Context, noteId: String?): Intent {
             val intent = Intent(context, NoteActivity::class.java)
-            intent.putExtra(EXTRA_NOTE, note)
+            intent.putExtra(EXTRA_NOTE, noteId)
             return intent
         }
     }
 
-    private lateinit var ui: ActivityNoteBinding
+    override val model: NoteViewModel by viewModel()
+    override val layoutRes = R.layout.activity_note
+    override val ui: ActivityNoteBinding by lazy {
+        ActivityNoteBinding.inflate(layoutInflater)
+    }
     private var note: Note? = null
-
-    private lateinit var viewModel: NoteViewModel
+    private var color: Color = Color.BLUE
 
     private val textChangeListener = object : TextWatcher {
         override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {
@@ -52,60 +61,87 @@ class NoteActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        ui = ActivityNoteBinding.inflate(layoutInflater)
+        val noteId = intent.getStringExtra(EXTRA_NOTE)
         setContentView(ui.root)
-
-        note = intent.getParcelableExtra(EXTRA_NOTE)
-
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
 
-        supportActionBar?.title = if (note != null) {
-            SimpleDateFormat(DATETIME_FORMAT, Locale.getDefault()).format(note!!.lastChanged)
-        } else {
-            getString(R.string.new_note_title)
+        noteId?.let {
+            model.loadNote(it)
+        } ?: run {
+            supportActionBar?.title = getString(R.string.new_note_title)
         }
 
-        viewModel = ViewModelProviders.of(this).get(NoteViewModel::class.java)
+        ui.colorPicker.onColorClickListener = { c ->
+            color = c
+            setBackgroundColor(c)
+            triggerSaveNote()
+        }
 
-        initView()
+        setEditListeners()
     }
 
     private fun initView() {
-        ui.noteTitleEdit.setText(note?.title ?: "noteTitleEdit")
-        ui.noteTitleEdit.addTextChangedListener(textChangeListener)
-
-        ui.noteBodyEdit.setText(note?.body ?: "noteBodyEdit")
-        ui.noteBodyEdit.addTextChangedListener(textChangeListener)
-
-        ui.root.setBackgroundColor(resources.getColor(getColorResource(note?.color), null))
+        note?.run {
+            removeEditListeners()
+            if (ui.noteTitleEdit.text.toString() != title) {
+                ui.noteTitleEdit.setText(title)
+            }
+            if (ui.noteBodyEdit.text.toString() != body) {
+                ui.noteBodyEdit.setText(body)
+            }
+            setEditListeners()
+            supportActionBar?.title = lastChanged.format()
+            setBackgroundColor(color)
+        }
     }
 
-    override fun onOptionsItemSelected(item: MenuItem): Boolean {
-        return when (item.itemId) {
-            android.R.id.home -> {
-                onBackPressed()
-                true
-            }
-            else -> super.onOptionsItemSelected(item)
-        }
+    private fun setEditListeners() {
+        ui.noteTitleEdit.addTextChangedListener(textChangeListener)
+        ui.noteBodyEdit.addTextChangedListener(textChangeListener)
+    }
+
+    private fun removeEditListeners() {
+        ui.noteTitleEdit.removeTextChangedListener(textChangeListener)
+        ui.noteBodyEdit.removeTextChangedListener(textChangeListener)
+    }
+
+    override fun onCreateOptionsMenu(menu: Menu?): Boolean =
+        MenuInflater(this).inflate(R.menu.menu_note, menu).let { true }
+
+    override fun onOptionsItemSelected(item: MenuItem): Boolean = when (item.itemId) {
+        android.R.id.home -> super.onBackPressed().let { true }
+        R.id.palette -> togglePalette().let { true }
+        R.id.delete -> deleteNote().let { true }
+        else -> super.onOptionsItemSelected(item)
+    }
+
+    private fun deleteNote() {
+        AlertDialog.Builder(this)
+            .setTitle(R.string.delete_title)
+            .setMessage(R.string.delete_message)
+            .setPositiveButton(R.string.ok_button) { _, _ -> model.deleteNote() }
+            .setNegativeButton(R.string.cancel_button) { dialog, _ -> dialog.dismiss() }
+            .create()
+            .show()
     }
 
     private fun triggerSaveNote() {
-        if (ui.noteTitleEdit.text == null || ui.noteBodyEdit.text!!.length < 3) {
-            return
-        }
+        ui.noteTitleEdit.text?.let {
+            if (it.length < 3) return
 
-        Handler().postDelayed({
-            note = note?.copy(
-                title = ui.noteTitleEdit.text.toString(),
-                body = ui.noteBodyEdit.text.toString(),
-                lastChanged = Date()
-            ) ?: createNewNote()
+            launch {
+                delay(SAVE_DELAY)
 
-            if (note != null) {
-                viewModel.saveChanges(note!!)
+                note = note?.copy(
+                    title = ui.noteTitleEdit.text.toString(),
+                    body = ui.noteBodyEdit.text.toString(),
+                    lastChanged = Date(),
+                    color = color
+                ) ?: createNewNote()
+
+                note?.let { n -> model.saveChanges(n) }
             }
-        }, SAVE_DELAY)
+        }
     }
 
     private fun createNewNote(): Note = Note(
@@ -113,4 +149,32 @@ class NoteActivity : AppCompatActivity() {
         ui.noteTitleEdit.text.toString(),
         ui.noteBodyEdit.text.toString()
     )
+
+    override fun renderData(data: NoteViewState.Data) {
+        if (data.isDeleted) finish()
+
+        this.note = data.note
+        data.note?.let { color = it.color }
+        initView()
+    }
+
+    private fun setBackgroundColor(color: Color) {
+        ui.layout.setBackgroundColor(color.getColorInt(this@NoteActivity))
+    }
+
+    private fun togglePalette() {
+        if (ui.colorPicker.isOpen) {
+            ui.colorPicker.close()
+        } else {
+            ui.colorPicker.open()
+        }
+    }
+
+    override fun onBackPressed() {
+        if (ui.colorPicker.isOpen) {
+            ui.colorPicker.close()
+            return
+        }
+        super.onBackPressed()
+    }
 }

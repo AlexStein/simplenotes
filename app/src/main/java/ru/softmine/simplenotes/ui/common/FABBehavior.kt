@@ -35,7 +35,8 @@ class FABBehavior(context: Context, attributeSet: AttributeSet) :
         dyConsumed: Int,
         dxUnconsumed: Int,
         dyUnconsumed: Int,
-        type: Int
+        type: Int,
+        consumed: IntArray
     ) {
         super.onNestedScroll(
             coordinatorLayout,
@@ -45,7 +46,8 @@ class FABBehavior(context: Context, attributeSet: AttributeSet) :
             dyConsumed,
             dxUnconsumed,
             dyUnconsumed,
-            type
+            type,
+            consumed
         )
 
         if (dyConsumed > 0 && child.visibility == View.VISIBLE) {

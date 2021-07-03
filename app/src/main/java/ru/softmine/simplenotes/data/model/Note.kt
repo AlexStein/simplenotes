@@ -1,17 +1,18 @@
 package ru.softmine.simplenotes.data.model
 
 import android.os.Parcelable
-import kotlinx.android.parcel.Parcelize
+import kotlinx.parcelize.Parcelize
 import ru.softmine.simplenotes.common.Color
 import java.util.*
 
 @Parcelize
 data class Note(
-    val id: String,
-    val title: String,
-    val body: String,
+    val id: String = "",
+    val title: String = "",
+    val body: String = "",
     val color: Color = Color.WHITE,
-    val lastChanged: Date = Date()) : Parcelable {
+    val lastChanged: Date = Date()
+) : Parcelable {
 
     override fun equals(other: Any?): Boolean {
         if (this === other) {

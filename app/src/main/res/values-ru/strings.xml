@@ -1,4 +1,18 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Заметки</string>
+    <string name="title_activity_note">Заметка</string>
+    <string name="note_body_hint">Введите текст заметки</string>
+    <string name="note_title_hint">Введите заголовок</string>
+    <string name="new_note_title">Новая заметка</string>
+    <string name="add_new_note">Добавить заметку</string>
+    <string name="ok_button">Хорошо</string>
+    <string name="logout">Выйти</string>
+    <string name="logout_title">Выход</string>
+    <string name="logout_message">Вы хотите выйти из аккаунта?</string>
+    <string name="cancel_button">Отмена</string>
+    <string name="change_color_menu_title">Выбрать цвет</string>
+    <string name="delete_menu_title">Удалить заметку</string>
+    <string name="delete_title">Подтвердите удаление</string>
+    <string name="delete_message">Вы действительно хотите удалить эту заметку?</string>
 </resources>
