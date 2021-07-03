@@ -6,6 +6,11 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.firestore.*
 import io.mockk.*
+import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.consumeEach
+import kotlinx.coroutines.test.TestCoroutineDispatcher
+import kotlinx.coroutines.test.resetMain
+import kotlinx.coroutines.test.setMain
 import org.junit.After
 import org.junit.Assert.*
 import org.junit.Before
@@ -16,7 +21,8 @@ import ru.softmine.simplenotes.data.model.Note
 import ru.softmine.simplenotes.data.model.NoteResult
 import ru.softmine.simplenotes.data.provider.FirebaseRemoteProvider
 
-
+@ObsoleteCoroutinesApi
+@ExperimentalCoroutinesApi
 class FirebaseRemoteProviderTest {
 
     @get:Rule
@@ -33,9 +39,11 @@ class FirebaseRemoteProviderTest {
 
     private val provider: FirebaseRemoteProvider = FirebaseRemoteProvider(mockAuth, mockDb)
 
+    private val testDispatcher = TestCoroutineDispatcher()
+
     @Before
     fun setUp() {
-        //clearMocks(mockCollection, mockDocument1, mockDocument2, mockDocument3)
+        Dispatchers.setMain(testDispatcher)
 
         every { mockAuth.currentUser } returns mockUser
         every { mockUser.uid } returns ""
@@ -51,8 +59,13 @@ class FirebaseRemoteProviderTest {
     fun `should throw if no auth`() {
         var result: Any? = null
         every { mockAuth.currentUser } returns null
-        provider.subscribeToAllNotes().observeForever {
-            result = (it as? NoteResult.Error)?.error
+
+        runBlocking {
+            launch(Dispatchers.Main) {
+                provider.subscribeToAllNotes().consumeEach {
+                    result = (it as? NoteResult.Error)?.error
+                }
+            }
         }
         assertTrue(result is NoAuthException)
     }
@@ -67,8 +80,12 @@ class FirebaseRemoteProviderTest {
                 listOf(mockDocument1, mockDocument2, mockDocument3)
         every { mockCollection.addSnapshotListener(capture(slot)) } returns mockk()
 
-        provider.subscribeToAllNotes().observeForever {
-            result = (it as? NoteResult.Success<List<Note>>)?.data
+        runBlocking {
+            launch(Dispatchers.Main) {
+                provider.subscribeToAllNotes().consumeEach {
+                    result = (it as? NoteResult.Success<List<Note>>)?.data
+                }
+            }
         }
 
         slot.captured.onEvent(mockSnapshot, null)
@@ -84,8 +101,12 @@ class FirebaseRemoteProviderTest {
 
         every { mockCollection.addSnapshotListener(capture(slot)) } returns mockk()
 
-        provider.subscribeToAllNotes().observeForever {
-            result = (it as? NoteResult.Error)?.error
+        runBlocking {
+            launch(Dispatchers.Main) {
+                provider.subscribeToAllNotes().consumeEach {
+                    result = (it as? NoteResult.Error)?.error
+                }
+            }
         }
 
         slot.captured.onEvent(null, testError)
@@ -107,8 +128,10 @@ class FirebaseRemoteProviderTest {
         } returns mockk()
         every { mockDocumentSnapshot.toObject(Note::class.java) } returns testNotes[0]
 
-        provider.getNoteById(testNotes[0].id).observeForever {
-            result = (it as? NoteResult.Success<Note>)?.data
+        runBlocking {
+            launch(Dispatchers.Main) {
+                result = provider.getNoteById(testNotes[0].id)
+            }
         }
 
         slot.captured.onSuccess(mockDocumentSnapshot)
@@ -118,15 +141,17 @@ class FirebaseRemoteProviderTest {
 
     @Test
     fun `getNoteById return error`() {
-        var result: Throwable? = null
+        val result: Throwable? = null
         val testError = mockk<FirebaseFirestoreException>()
         val mockDocumentReference: DocumentReference = mockk()
 
         every { mockCollection.document(any()) } returns mockDocumentReference
         every { mockDocumentReference.get() } throws testError
 
-        provider.getNoteById(testNotes[0].id).observeForever {
-            result = (it as? NoteResult.Error)?.error
+        runBlocking {
+            launch(Dispatchers.Main) {
+                provider.getNoteById(testNotes[0].id)
+            }
         }
 
         assertNotNull(result)
@@ -138,7 +163,12 @@ class FirebaseRemoteProviderTest {
         val mockDocumentReference: DocumentReference = mockk()
         every { mockCollection.document(testNotes[0].id) } returns
                 mockDocumentReference
-        provider.saveNote(testNotes[0])
+
+        runBlocking {
+            launch(Dispatchers.Main) {
+                provider.saveNote(testNotes[0])
+            }
+        }
 
         verify(exactly = 1) { mockDocumentReference.set(testNotes[0]) }
     }
@@ -154,8 +184,10 @@ class FirebaseRemoteProviderTest {
             mockDocumentReference.set(testNotes[0]).addOnSuccessListener(capture(slot))
         } returns mockk()
 
-        provider.saveNote(testNotes[0]).observeForever {
-            result = (it as? NoteResult.Success<Note>)?.data
+        runBlocking {
+            launch(Dispatchers.Main) {
+                result = provider.saveNote(testNotes[0])
+            }
         }
         slot.captured.onSuccess(null)
 
@@ -167,13 +199,15 @@ class FirebaseRemoteProviderTest {
     fun `saveNote return error`() {
         val mockDocumentReference: DocumentReference = mockk()
         val testError = mockk<FirebaseFirestoreException>()
-        var result: Throwable? = null
+        val result: Throwable? = null
 
         every { mockCollection.document(testNotes[0].id) } returns mockDocumentReference
         every { mockDocumentReference.set(testNotes[0]) } throws testError
 
-        provider.saveNote(testNotes[0]).observeForever {
-            result = (it as? NoteResult.Error)?.error
+        runBlocking {
+            launch(Dispatchers.Main) {
+                provider.saveNote(testNotes[0])
+            }
         }
 
         assertNotNull(result)
@@ -183,5 +217,6 @@ class FirebaseRemoteProviderTest {
     @After
     fun tearDown() {
         clearMocks(mockCollection, mockDocument1, mockDocument2, mockDocument3)
+        Dispatchers.resetMain()
     }
 }
