@@ -1,86 +1,103 @@
 package ru.softmine.simplenotes.data.provider
 
-import android.util.Log
-import androidx.lifecycle.LiveData
-import androidx.lifecycle.MutableLiveData
-import com.google.android.gms.tasks.OnFailureListener
-import com.google.android.gms.tasks.OnSuccessListener
-import com.google.firebase.firestore.*
-import com.google.firebase.firestore.core.QueryListener
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.ListenerRegistration
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.channels.ReceiveChannel
+import ru.softmine.simplenotes.data.errors.NoAuthException
 import ru.softmine.simplenotes.data.model.Note
 import ru.softmine.simplenotes.data.model.NoteResult
-import java.lang.Exception
+import ru.softmine.simplenotes.data.model.User
+import kotlin.coroutines.resume
+import kotlin.coroutines.resumeWithException
+import kotlin.coroutines.suspendCoroutine
 
 private const val NOTES_COLLECTION = "notes"
+private const val USERS_COLLECTION = "users"
 
-class FirebaseRemoteProvider() : RemoteDataProvider {
+class FirebaseRemoteProvider(
+    private val firebaseAuth: FirebaseAuth,
+    private val db: FirebaseFirestore
+) : RemoteDataProvider {
 
-    companion object {
-        private val TAG = FirebaseRemoteProvider::class.java.simpleName
-    }
+    private val currentUser
+        get() = firebaseAuth.currentUser
 
-    private val db = FirebaseFirestore.getInstance()
-    private val notesReference = db.collection(NOTES_COLLECTION)
+    @ExperimentalCoroutinesApi
+    override fun subscribeToAllNotes(): ReceiveChannel<NoteResult> =
+        Channel<NoteResult>(Channel.CONFLATED).apply {
+            var registration: ListenerRegistration? = null
 
-    override fun subscribeToAllNotes(): LiveData<NoteResult> {
-        val result = MutableLiveData<NoteResult>()
+            try {
+                registration =
+                    getUserNotesCollection().addSnapshotListener { snapshot,
+                                                                   e ->
+                        val value = e?.let {
+                            NoteResult.Error(it)
+                        } ?: snapshot?.let {
+                            val notes = it.documents.map { doc ->
+                                doc.toObject(Note::class.java)
+                            }
+                            NoteResult.Success(notes)
+                        }
 
-        notesReference.addSnapshotListener(object : EventListener<QuerySnapshot> {
-            override fun onEvent(snapshot: QuerySnapshot?, error: FirebaseFirestoreException?) {
-                if (error != null) {
-                    Log.e(TAG, "Error getting notes. Message: ${error.message}")
-                    result.value = NoteResult.Error(error)
-                } else if (snapshot != null) {
-                    val notes = mutableListOf<Note>()
-                    for (doc: QueryDocumentSnapshot in snapshot) {
-                        notes.add(doc.toObject(Note::class.java))
+                        value?.let { offer(it) }
                     }
-                    result.value = NoteResult.Success(notes)
-                }
+            } catch (e: Throwable) {
+                offer(NoteResult.Error(e))
             }
-        })
 
-        return result
-    }
+            invokeOnClose { registration?.remove() }
+        }
 
-    override fun getNoteById(id: String): LiveData<NoteResult> {
-        val result = MutableLiveData<NoteResult>()
+    override suspend fun getNoteById(id: String): Note =
+        suspendCoroutine { continuation ->
+            try {
+                getUserNotesCollection().document(id).get()
+                    .addOnSuccessListener {
+                        continuation.resume(it.toObject(Note::class.java)!!)
+                    }.addOnFailureListener {
+                        continuation.resumeWithException(it)
+                    }
+            } catch (e: Throwable) {
+                continuation.resumeWithException(e)
+            }
+        }
 
-        notesReference.document(id).get()
-            .addOnSuccessListener(object : OnSuccessListener<DocumentSnapshot> {
-                override fun onSuccess(doc: DocumentSnapshot) {
-                    result.value = NoteResult.Success(doc.toObject(Note::class.java))
-                }
+    override suspend fun saveNote(note: Note): Note =
+        suspendCoroutine { continuation ->
+            try {
+                getUserNotesCollection().document(note.id).set(note)
+                    .addOnSuccessListener {
+                        continuation.resume(note)
+                    }.addOnFailureListener {
+                        continuation.resumeWithException(it)
+                    }
+            } catch (e: Throwable) {
+                continuation.resumeWithException(e)
+            }
+        }
 
-            })
-            .addOnFailureListener(object : OnFailureListener {
-                override fun onFailure(exception: Exception) {
-                    Log.e(TAG, "Error getting note. Message: ${exception.message}")
-                    result.value = NoteResult.Error(exception)
-                }
-            })
+    override suspend fun deleteNote(noteId: String): Note? =
+        suspendCoroutine { continuation ->
+            try {
+                getUserNotesCollection().document(noteId).delete()
+                    .addOnSuccessListener {
+                        continuation.resume(null)
+                    }.addOnFailureListener {
+                        continuation.resumeWithException(it)
+                    }
+            } catch (e: Throwable) {
+                continuation.resumeWithException(e)
+            }
+        }
 
-        return result
-    }
+    override fun getCurrentUser(): User? =
+        currentUser?.let { User(it.displayName ?: "", it.email ?: "") }
 
-    override fun saveNote(note: Note): LiveData<NoteResult> {
-        val result = MutableLiveData<NoteResult>()
-
-        notesReference.document(note.id)
-            .set(note)
-            .addOnSuccessListener(object : OnSuccessListener<Void> {
-                override fun onSuccess(p0: Void?) {
-                    Log.d(TAG, "Note $note is saved")
-                    result.value = NoteResult.Success(note)
-                }
-            })
-            .addOnFailureListener(object : OnFailureListener {
-                override fun onFailure(exception: Exception) {
-                    Log.e(TAG, "Error saving note $note. Message: ${exception.message}")
-                    result.value = NoteResult.Error(exception)
-                }
-            })
-
-        return result
-    }
+    private fun getUserNotesCollection() = currentUser?.let {
+        db.collection(USERS_COLLECTION).document(it.uid).collection(NOTES_COLLECTION)
+    } ?: throw NoAuthException()
 }
