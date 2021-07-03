@@ -7,4 +7,14 @@
     <color name="teal_700">#FF018786</color>
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
+    <!-- Colors value for Color class -->
+    <color name="color_white">#FFF6F6F6</color>
+    <color name="color_red">#FFFF6666</color>
+    <color name="color_orange">#FFFF9933</color>
+    <color name="color_yellow">#FFFFFF00</color>
+    <color name="color_green">#FF99FF99</color>
+    <color name="color_blue">#FF9999FF</color>
+    <color name="color_violet">#FFFF99FF</color>
+    <color name="color_pink">#FFFF9999</color>
+    <color name="color_brown">#FFAA9933</color>
 </resources>

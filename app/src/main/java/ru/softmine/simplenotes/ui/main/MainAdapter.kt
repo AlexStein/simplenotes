@@ -5,10 +5,16 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
 import ru.softmine.simplenotes.R
+import ru.softmine.simplenotes.common.getColorResource
 import ru.softmine.simplenotes.data.model.Note
 import ru.softmine.simplenotes.databinding.ItemNoteBinding
 
-class MainAdapter : RecyclerView.Adapter<NoteViewHolder>() {
+interface OnItemClickListener {
+    fun onItemClick(note: Note)
+}
+
+class MainAdapter(private val onItemClickListener: OnItemClickListener) :
+    RecyclerView.Adapter<MainAdapter.NoteViewHolder>() {
 
     var notes: List<Note> = listOf()
         set(value) {
@@ -28,17 +34,20 @@ class MainAdapter : RecyclerView.Adapter<NoteViewHolder>() {
     }
 
     override fun getItemCount() = notes.size
-}
 
-class NoteViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
+    inner class NoteViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
 
-    private val ui = ItemNoteBinding.bind(itemView)
+        private val ui: ItemNoteBinding by lazy { ItemNoteBinding.bind(itemView) }
 
-    fun bind(note: Note) {
-        with(note) {
-            ui.noteTitle.text = title
-            ui.noteBody.text = body
-            itemView.setBackgroundColor(color)
+        fun bind(note: Note) {
+            with(note) {
+                ui.noteTitle.text = title
+                ui.noteBody.text = body
+                itemView.setBackgroundColor(
+                    itemView.context.resources.getColor(color.getColorResource(), null)
+                )
+                itemView.setOnClickListener { onItemClickListener.onItemClick(note) }
+            }
         }
     }
 }

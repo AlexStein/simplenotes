@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.coordinatorlayout.widget.CoordinatorLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:theme="@style/Theme.AppCompat.DayNight.DarkActionBar"
+    tools:context=".ui.note.NoteActivity">
+
+    <LinearLayout
+        android:id="@+id/layout"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        app:layout_behavior="@string/appbar_scrolling_view_behavior">
+
+        <HorizontalScrollView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:scrollbars="none">
+
+            <ru.softmine.simplenotes.ui.customviews.ColorPickerView
+                android:id="@+id/colorPicker"
+                android:layout_width="wrap_content"
+                android:layout_height="?attr/actionBarSize"/>
+        </HorizontalScrollView>
+
+        <com.google.android.material.textfield.TextInputLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="@dimen/layout_padding"
+            android:layout_marginEnd="@dimen/layout_padding"
+            android:layout_marginTop="@dimen/layout_padding"
+            android:hint="@string/note_title_hint">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/noteTitleEdit"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content" />
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <EditText
+            android:id="@+id/noteBodyEdit"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@null"
+            android:layout_marginStart="@dimen/layout_padding"
+            android:layout_marginEnd="@dimen/layout_padding"
+            android:layout_marginTop="@dimen/layout_padding"
+            android:hint="@string/note_body_hint" />
+    </LinearLayout>
+</androidx.coordinatorlayout.widget.CoordinatorLayout>
