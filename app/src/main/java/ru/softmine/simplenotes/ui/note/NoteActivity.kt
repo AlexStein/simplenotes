@@ -4,12 +4,14 @@ import android.app.AlertDialog
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
-import android.os.Handler
 import android.text.Editable
 import android.text.TextWatcher
 import android.view.Menu
 import android.view.MenuInflater
 import android.view.MenuItem
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import org.koin.android.viewmodel.ext.android.viewModel
 import ru.softmine.simplenotes.R
 import ru.softmine.simplenotes.common.Color
@@ -22,7 +24,8 @@ import java.util.*
 
 private const val SAVE_DELAY = 2000L
 
-class NoteActivity : BaseActivity<NoteViewState.Data, NoteViewState>() {
+@ExperimentalCoroutinesApi
+class NoteActivity : BaseActivity<NoteViewState.Data>() {
 
     companion object {
         private val EXTRA_NOTE = NoteActivity::class.java.name + "extra.NOTE"
@@ -126,7 +129,9 @@ class NoteActivity : BaseActivity<NoteViewState.Data, NoteViewState>() {
         ui.noteTitleEdit.text?.let {
             if (it.length < 3) return
 
-            Handler().postDelayed({
+            launch {
+                delay(SAVE_DELAY)
+
                 note = note?.copy(
                     title = ui.noteTitleEdit.text.toString(),
                     body = ui.noteBodyEdit.text.toString(),
@@ -135,7 +140,7 @@ class NoteActivity : BaseActivity<NoteViewState.Data, NoteViewState>() {
                 ) ?: createNewNote()
 
                 note?.let { n -> model.saveChanges(n) }
-            }, SAVE_DELAY)
+            }
         }
     }
 
@@ -154,7 +159,7 @@ class NoteActivity : BaseActivity<NoteViewState.Data, NoteViewState>() {
     }
 
     private fun setBackgroundColor(color: Color) {
-        ui.root.setBackgroundColor(color.getColorInt(this@NoteActivity))
+        ui.layout.setBackgroundColor(color.getColorInt(this@NoteActivity))
     }
 
     private fun togglePalette() {

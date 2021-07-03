@@ -1,38 +1,34 @@
 package ru.softmine.simplenotes.ui.main
 
-import androidx.lifecycle.LiveData
-import androidx.lifecycle.Observer
+import androidx.annotation.VisibleForTesting
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.channels.consumeEach
+import kotlinx.coroutines.launch
 import ru.softmine.simplenotes.data.Repository
 import ru.softmine.simplenotes.data.model.Note
 import ru.softmine.simplenotes.data.model.NoteResult
 import ru.softmine.simplenotes.ui.base.BaseViewModel
 
-class MainViewModel(private val repository: Repository) :
-    BaseViewModel<List<Note>?, MainViewState>() {
-    private val repositoryNotes = repository.getNotes()
+@ExperimentalCoroutinesApi
+class MainViewModel(repository: Repository) :
+    BaseViewModel<List<Note>?>() {
 
-    private val notesObserver =
-        Observer<NoteResult> { t ->
-            t?.let {
+    private val notesChannel = repository.getNotes()
+
+    init {
+        launch {
+            notesChannel.consumeEach {
                 when (it) {
-                    is NoteResult.Success<*> -> {
-                        viewStateLiveData.value = MainViewState(notes = it.data as? List<Note>)
-                    }
-                    is NoteResult.Error -> {
-                        viewStateLiveData.value = MainViewState(error = it.error)
-                    }
+                    is NoteResult.Success<*> -> setData(it.data as? List<Note>)
+                    is NoteResult.Error -> setError(it.error)
                 }
             }
         }
-
-    init {
-        viewStateLiveData.value = MainViewState()
-        repositoryNotes.observeForever(notesObserver)
     }
 
-    fun viewState(): LiveData<MainViewState> = viewStateLiveData
-
-    override fun onCleared() {
-        repositoryNotes.removeObserver(notesObserver)
+    @VisibleForTesting
+    public override fun onCleared() {
+        notesChannel.cancel()
+        super.onCleared()
     }
 }
